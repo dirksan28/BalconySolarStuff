@@ -6,17 +6,15 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-
+##############################################
 # Change these constants to your location.
-CITY_NAME = "Weitenung"
-COUNTRY_CODE = "DE"
+CITY_NAME = "Weitenung" # Name of the city for which to fetch weather and solar data
+COUNTRY_CODE = "DE" # Country code for the location
 
-# Optional solar panel estimate settings.
+# Solar panel estimate settings. Feel free to change these values to match your own solar panel setup.
 PANEL_LENGTH_M = 1.72 # in meters, measured along the panel's longest side (the "portrait" orientation)
 PANEL_WIDTH_M = 1.13 # in meters, measured along the panel's shortest side (the "portrait" orientation)
-PANEL_AREA_M2 = PANEL_LENGTH_M * PANEL_WIDTH_M
 PANEL_RATED_POWER_W = 400 # in watts, the panel's rated power output under standard test conditions (STC)
-PANEL_STC_EFFICIENCY = PANEL_RATED_POWER_W / (1000 * PANEL_AREA_M2)
 PANEL_COUNT = 2
 SYSTEM_AC_EFFICIENCY = 0.95 # Total inverter efficiency factor (accounting for DC-to-AC conversion losses, cable resistance, and minor system degradation)
 PANEL_TILT_DEG = 26.5 # Panel tilt angle in degrees, measured relative to the horizontal ground (0° = flat, 90° = vertical)
@@ -31,7 +29,10 @@ PANEL_AZIMUTH_DEG = 35 #https://azimut.polka-umwelt.de/ # Panel orientation in d
 U0 = 21.4 # Base heat transfer coefficient (influence of ambient temperature)
 U1 = 4.02 # Wind cooling factor (cooling effect per m/s of wind speed)
 TEMP_COEFF = -0.0038 # Temperature coefficient of the panel (-0.38% power per °C above 25°C)
+################################################
 
+PANEL_AREA_M2 = PANEL_LENGTH_M * PANEL_WIDTH_M
+PANEL_STC_EFFICIENCY = PANEL_RATED_POWER_W / (1000 * PANEL_AREA_M2)
 
 def fetch_json(url: str) -> dict:
 	request = Request(url, headers={"User-Agent": "hello-weather-script/1.0"})
