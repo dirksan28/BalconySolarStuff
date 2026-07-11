@@ -120,6 +120,20 @@ def estimate_ac_output_w(array_output_w: float) -> float:
 	return array_output_w * SYSTEM_AC_EFFICIENCY
 
 
+def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: float, irradiance_w_m2: float) -> tuple[float, float]:
+	if irradiance_w_m2 == 0.0:
+		t_cell = temp_ambient
+	else:
+		t_cell = temp_ambient + (irradiance_w_m2 / (U0 + U1 * wind_speed_ms))
+
+	if t_cell > 25.0:
+		temp_loss_factor = 1.0 + (TEMP_COEFF * (t_cell - 25.0))
+	else:
+		temp_loss_factor = 1.0
+
+	return t_cell, temp_loss_factor
+
+
 def get_weather(location: dict) -> str:
 	lat = location["latitude"]
 	lon = location["longitude"]
@@ -152,15 +166,7 @@ def get_weather(location: dict) -> str:
 		wind_speed_ms = wind_speed / 3.6
 		tilted_irradiance = float(tilted_irradiance_raw)
 		horizontal_irradiance = float(horizontal_irradiance_raw)
-		g_total = tilted_irradiance
-		if g_total == 0.0:
-			t_cell = temp_ambient
-		else:
-			t_cell = temp_ambient + (g_total / (U0 + U1 * wind_speed_ms))
-		if t_cell > 25.0:
-			temp_loss_factor = 1.0 + (TEMP_COEFF * (t_cell - 25.0))
-		else:
-			temp_loss_factor = 1.0
+		t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
 
 		panel_output_w = estimate_panel_output_w(tilted_irradiance)
 		dc_output_w = estimate_array_output_w(panel_output_w) * temp_loss_factor
