@@ -34,6 +34,14 @@ PANEL_AREA_M2 = PANEL_LENGTH_M * PANEL_WIDTH_M
 PANEL_STC_EFFICIENCY = PANEL_RATED_POWER_W / (1000 * PANEL_AREA_M2)
 
 def fetch_json(url: str) -> dict:
+	"""Fetch and parse JSON data from a URL.
+
+	Args:
+		url: The API endpoint to request.
+
+	Returns:
+		The parsed JSON payload as a dictionary.
+	"""
 	request = Request(url, headers={"User-Agent": "hello-weather-script/1.0"})
 	with urlopen(request, timeout=10) as response:
 		payload = response.read().decode("utf-8", errors="replace")
@@ -46,6 +54,15 @@ def fetch_json(url: str) -> dict:
 
 
 def resolve_location(cityname: str, countryCode: str) -> dict:
+	"""Resolve a city name to geographical coordinates and timezone.
+
+	Args:
+		cityname: The city name to look up.
+		countryCode: An optional country code to narrow the search.
+
+	Returns:
+		A dictionary containing the resolved location details.
+	"""
 	city = cityname.strip()
 	if not city:
 		raise ValueError("CITY_NAME is empty. Set CITY_NAME to a city, e.g. 'Karlsruhe'.")
@@ -75,6 +92,14 @@ def resolve_location(cityname: str, countryCode: str) -> dict:
 
 
 def weather_code_to_text(code: int) -> str:
+	"""Convert an Open-Meteo weather code into a human-readable description.
+
+	Args:
+		code: The numeric weather code from the API.
+
+	Returns:
+		A descriptive weather label as a string.
+	"""
 	weather_codes = {
 		0: "Clear sky",
 		1: "Mainly clear",
@@ -108,19 +133,17 @@ def weather_code_to_text(code: int) -> str:
 	return weather_codes.get(code, f"Unknown weather code {code}")
 
 
-def estimate_panel_output_w(irradiance_w_m2: float) -> float:
-	return irradiance_w_m2 * PANEL_AREA_M2 * PANEL_STC_EFFICIENCY
-
-
-def estimate_array_output_w(panel_output_w: float) -> float:
-	return panel_output_w * PANEL_COUNT
-
-
-def estimate_ac_output_w(array_output_w: float) -> float:
-	return array_output_w * SYSTEM_AC_EFFICIENCY
-
-
 def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: float, irradiance_w_m2: float) -> tuple[float, float]:
+	"""Estimate cell temperature and the resulting temperature-loss factor.
+
+	Args:
+		temp_ambient: Ambient air temperature in degrees Celsius.
+		wind_speed_ms: Wind speed in meters per second.
+		irradiance_w_m2: Solar irradiance in watts per square meter.
+
+	Returns:
+		A tuple containing the cell temperature and the temperature-loss factor.
+	"""
 	if irradiance_w_m2 == 0.0:
 		t_cell = temp_ambient
 	else:
@@ -135,6 +158,14 @@ def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: floa
 
 
 def getWeatherData(location: dict) -> dict:
+	"""Fetch current weather data for a resolved location.
+
+	Args:
+		location: A dictionary containing latitude, longitude, and timezone.
+
+	Returns:
+		The same location dictionary enriched with weather fields.
+	"""
 	latitude = location["latitude"]
 	longitude = location["longitude"]
 	timezone_name = location["timezone"]
@@ -165,6 +196,14 @@ def getWeatherData(location: dict) -> dict:
 
 
 def calculateSolarData(weather_data: dict) -> dict:
+	"""Add solar-performance estimates to an existing weather-data dictionary.
+
+	Args:
+		weather_data: A dictionary containing current weather and location values.
+
+	Returns:
+		The same dictionary enriched with solar-output and temperature-loss values.
+	"""
 
 	temp_ambient = float(weather_data.get("temp_ambient"))
 	wind_speed = float(weather_data.get("wind_speed"))
@@ -173,9 +212,9 @@ def calculateSolarData(weather_data: dict) -> dict:
 	horizontal_irradiance = weather_data.get("horizontal_irradiance")
 
 	t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
-	panel_output_w = estimate_panel_output_w(tilted_irradiance)
-	dc_output_w = estimate_array_output_w(panel_output_w) * temp_loss_factor
-	ac_output_w = estimate_ac_output_w(dc_output_w)
+	panel_output_w = tilted_irradiance * PANEL_AREA_M2 * PANEL_STC_EFFICIENCY
+	dc_output_w = panel_output_w * PANEL_COUNT * temp_loss_factor
+	ac_output_w = dc_output_w * SYSTEM_AC_EFFICIENCY
 	density_w_m2 = tilted_irradiance * PANEL_STC_EFFICIENCY
 
 	weather_data.update({
@@ -189,6 +228,14 @@ def calculateSolarData(weather_data: dict) -> dict:
 	return weather_data
 
 def get_time(timezone_name: str) -> str:
+	"""Format the current time for a given timezone.
+
+	Args:
+		timezone_name: The timezone name to format the time for.
+
+	Returns:
+		A human-readable timestamp string.
+	"""
 	try:
 		now = datetime.now(ZoneInfo(timezone_name))
 	except ZoneInfoNotFoundError:
@@ -199,6 +246,14 @@ def get_time(timezone_name: str) -> str:
 
 
 def main() -> None:
+	"""Run the full weather lookup and solar-output estimation flow.
+
+	Args:
+		None.
+
+	Returns:
+		None. The function prints the current time and the formatted solar summary.
+	"""
 	result = {}
 	try:
 		result = resolve_location(CITY_NAME, COUNTRY_CODE)
