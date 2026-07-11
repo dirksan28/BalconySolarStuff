@@ -134,7 +134,7 @@ def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: floa
 	return t_cell, temp_loss_factor
 
 
-def get_weather(location: dict) -> str:
+def getWeatherAndSolarData(location: dict) -> dict:
 	lat = location["latitude"]
 	lon = location["longitude"]
 	tz = quote(location["timezone"])
@@ -172,20 +172,41 @@ def get_weather(location: dict) -> str:
 		dc_output_w = estimate_array_output_w(panel_output_w) * temp_loss_factor
 		ac_output_w = estimate_ac_output_w(dc_output_w)
 		density_w_m2 = tilted_irradiance * PANEL_STC_EFFICIENCY
-		solar_text = (
-			f"tilted solar {tilted_irradiance:.0f} W/m^2, horizontal {horizontal_irradiance:.0f} W/m^2, "
-			f"panel {density_w_m2:.0f} W/m^2, "
-			f"wind {wind_speed_ms:.1f} m/s, "
-			f"t_cell {t_cell:.1f}°C, loss {temp_loss_factor:.3f}, "
-			f"panel DC {panel_output_w:.0f} W, array DC {dc_output_w:.0f} W, "
-			f"AC {ac_output_w:.0f} W, tilt {PANEL_TILT_DEG}°, azimuth {PANEL_AZIMUTH_DEG}°"
-		)
+		return {
+			"name": location.get("name", CITY_NAME),
+			"country": location.get("country", "Unknown"),
+			"temp_c": temp_c,
+			"apparent_temperature": apparent_temperature,
+			"description": desc,
+			"humidity": humidity,
+			"tilted_irradiance": tilted_irradiance,
+			"horizontal_irradiance": horizontal_irradiance,
+			"wind_speed_ms": wind_speed_ms,
+			"t_cell": t_cell,
+			"temp_loss_factor": temp_loss_factor,
+			"panel_output_w": panel_output_w,
+			"dc_output_w": dc_output_w,
+			"ac_output_w": ac_output_w,
+			"density_w_m2": density_w_m2,
+		}
 	except (TypeError, ValueError):
-		solar_text = "solar data unavailable"
-
-	name = location.get("name", CITY_NAME)
-	country = location.get("country", "Unknown")
-	return f"{name}, {country}: {temp_c}°C, feels like {apparent_temperature:.1f}°C, {desc}, humidity {humidity}%, {solar_text}"
+		return {
+			"name": location.get("name", CITY_NAME),
+			"country": location.get("country", "Unknown"),
+			"temp_c": temp_c,
+			"apparent_temperature": None,
+			"description": desc,
+			"humidity": humidity,
+			"tilted_irradiance": None,
+			"horizontal_irradiance": None,
+			"wind_speed_ms": None,
+			"t_cell": None,
+			"temp_loss_factor": None,
+			"panel_output_w": None,
+			"dc_output_w": None,
+			"ac_output_w": None,
+			"density_w_m2": None,
+		}
 
 
 def get_time(timezone_name: str) -> str:
@@ -201,7 +222,7 @@ def get_time(timezone_name: str) -> str:
 def main() -> None:
 	try:
 		location = resolve_location()
-		solarAndWeatherData = get_weather(location)
+		solarAndWeatherData = getWeatherAndSolarData(location)
 		current_time = get_time(location["timezone"])
 	except (URLError, TimeoutError, KeyError, ValueError) as exc:
 		print(f"Could not fetch live weather/time data: {exc}")
@@ -210,8 +231,21 @@ def main() -> None:
 	print("Current time:")
 	print(current_time)
 	print()  
-	print("Current weather and solar data:")
-	print(solarAndWeatherData)
+	print("Current weather and estimated solar data:")
+	
+	formatted_output = (
+    f"{solarAndWeatherData['name']}, {solarAndWeatherData['country']}: {solarAndWeatherData['temp_c']}°C, "
+    f"feels like {solarAndWeatherData['apparent_temperature']:.1f}°C, {solarAndWeatherData['description']}, "
+    f"humidity {solarAndWeatherData['humidity']}%, "
+    f"tilted solar {solarAndWeatherData['tilted_irradiance']:.0f} W/m^2, "
+    f"horizontal {solarAndWeatherData['horizontal_irradiance']:.0f} W/m^2, "
+    f"panel {solarAndWeatherData['density_w_m2']:.0f} W/m^2, "
+    f"wind {solarAndWeatherData['wind_speed_ms']:.1f} m/s, "
+    f"t_cell {solarAndWeatherData['t_cell']:.1f}°C, loss {solarAndWeatherData['temp_loss_factor']:.3f}, "
+    f"panel DC {solarAndWeatherData['panel_output_w']:.0f} W, array DC {solarAndWeatherData['dc_output_w']:.0f} W, "
+    f"AC {solarAndWeatherData['ac_output_w']:.0f} W, tilt {PANEL_TILT_DEG}°, azimuth {PANEL_AZIMUTH_DEG}°"
+)
+	print(formatted_output)
 	
 if __name__ == "__main__":
 	main()
