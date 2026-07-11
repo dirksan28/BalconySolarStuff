@@ -181,14 +181,13 @@ def getWeatherData(location: dict) -> dict:
 
 	current = data["current"]
 	location.update({
-		"description" : weather_code_to_text(current.get("weather_code", -1)),
+		"description": weather_code_to_text(current.get("weather_code", -1)),
 		"temp_c": current.get("temperature_2m", "?"),
 		"apparent_temperature": current.get("apparent_temperature", "?"),
 		"humidity": current.get("relative_humidity_2m", "?"),
 		"tilted_irradiance": float(current.get("global_tilted_irradiance")),
 		"horizontal_irradiance": float(current.get("shortwave_radiation")),
 		"raw_code": current.get("weather_code", -1),
-		"temp_ambient": current.get("temperature_2m"),
 		"wind_speed": current.get("wind_speed_10m", 0),
 		"wind_speed_ms": current.get("wind_speed_10m", 0) / 3.6
 	})
@@ -205,13 +204,13 @@ def calculateSolarData(weather_data: dict) -> dict:
 		The same dictionary enriched with solar-output and temperature-loss values.
 	"""
 
-	temp_ambient = float(weather_data.get("temp_ambient"))
+	temp_c = float(weather_data.get("temp_c"))
 	wind_speed = float(weather_data.get("wind_speed"))
-	wind_speed_ms = float(weather_data.get("wind_speed_ms"))	
+	wind_speed_ms = float(weather_data.get("wind_speed_ms"))
 	tilted_irradiance = weather_data.get("tilted_irradiance")
 	horizontal_irradiance = weather_data.get("horizontal_irradiance")
 
-	t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
+	t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_c, wind_speed_ms, tilted_irradiance)
 	panel_output_w = tilted_irradiance * PANEL_AREA_M2 * PANEL_STC_EFFICIENCY
 	dc_output_w = panel_output_w * PANEL_COUNT * temp_loss_factor
 	ac_output_w = dc_output_w * SYSTEM_AC_EFFICIENCY
