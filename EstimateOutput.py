@@ -134,16 +134,13 @@ def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: floa
 	return t_cell, temp_loss_factor
 
 
-def getWeatherAndSolarData(location: dict) -> dict:
-	lat = location["latitude"]
-	lon = location["longitude"]
-	tz = quote(location["timezone"])
+def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str) -> dict:
 	url = (
 		"https://api.open-meteo.com/v1/forecast"
-		f"?latitude={lat}&longitude={lon}"
+		f"?latitude={latitude}&longitude={longitude}"
 		"&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,global_tilted_irradiance,shortwave_radiation"
 		f"&tilt={PANEL_TILT_DEG}&azimuth={PANEL_AZIMUTH_DEG}"
-		f"&timezone={tz}"
+		f"&timezone={quote(timezone_name)}"
 	)
 	data = fetch_json(url)
 
@@ -173,8 +170,8 @@ def getWeatherAndSolarData(location: dict) -> dict:
 		ac_output_w = estimate_ac_output_w(dc_output_w)
 		density_w_m2 = tilted_irradiance * PANEL_STC_EFFICIENCY
 		return {
-			"name": location.get("name", CITY_NAME),
-			"country": location.get("country", "Unknown"),
+			"name": CITY_NAME,
+			"country": COUNTRY_CODE,
 			"temp_c": temp_c,
 			"apparent_temperature": apparent_temperature,
 			"description": desc,
@@ -191,8 +188,8 @@ def getWeatherAndSolarData(location: dict) -> dict:
 		}
 	except (TypeError, ValueError):
 		return {
-			"name": location.get("name", CITY_NAME),
-			"country": location.get("country", "Unknown"),
+			"name": CITY_NAME,
+			"country": COUNTRY_CODE,
 			"temp_c": temp_c,
 			"apparent_temperature": None,
 			"description": desc,
@@ -222,7 +219,11 @@ def get_time(timezone_name: str) -> str:
 def main() -> None:
 	try:
 		location = resolve_location()
-		solarAndWeatherData = getWeatherAndSolarData(location)
+		solarAndWeatherData = getWeatherAndSolarData(
+			location["latitude"],
+			location["longitude"],
+			location["timezone"],
+		)
 		current_time = get_time(location["timezone"])
 	except (URLError, TimeoutError, KeyError, ValueError) as exc:
 		print(f"Could not fetch live weather/time data: {exc}")
@@ -232,7 +233,7 @@ def main() -> None:
 	print(current_time)
 	print()  
 	print("Current weather and estimated solar data:")
-	
+
 	formatted_output = (
     f"{solarAndWeatherData['name']}, {solarAndWeatherData['country']}: {solarAndWeatherData['temp_c']}°C, "
     f"feels like {solarAndWeatherData['apparent_temperature']:.1f}°C, {solarAndWeatherData['description']}, "
