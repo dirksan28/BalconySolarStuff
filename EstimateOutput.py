@@ -45,8 +45,8 @@ def fetch_json(url: str) -> dict:
 		raise ValueError(f"Invalid JSON from API: {preview}") from exc
 
 
-def resolve_location() -> dict:
-	city = CITY_NAME.strip()
+def resolve_location(cityname: str, countryCode: str) -> dict:
+	city = cityname.strip()
 	if not city:
 		raise ValueError("CITY_NAME is empty. Set CITY_NAME to a city, e.g. 'Karlsruhe'.")
 
@@ -55,7 +55,7 @@ def resolve_location() -> dict:
 		f"?name={quote(city)}&count=1&language=en&format=json"
 	)
 
-	country = COUNTRY_CODE.strip()
+	country = countryCode.strip()
 	if country:
 		url += f"&countryCode={quote(country)}"
 
@@ -66,7 +66,7 @@ def resolve_location() -> dict:
 
 	place = results[0]
 	return {
-		"name": place.get("name", city),
+		"cityname": place.get("name", city),
 		"country": place.get("country", "Unknown"),
 		"latitude": float(place["latitude"]),
 		"longitude": float(place["longitude"]),
@@ -134,7 +134,11 @@ def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: floa
 	return t_cell, temp_loss_factor
 
 
-def getWeatherData(latitude: float, longitude: float, timezone_name: str) -> dict:
+def getWeatherData(location: dict) -> dict:
+	latitude = location["latitude"]
+	longitude = location["longitude"]
+	timezone_name = location["timezone"]
+
 	url = (
 		"https://api.open-meteo.com/v1/forecast"
 		f"?latitude={latitude}&longitude={longitude}"
@@ -145,76 +149,44 @@ def getWeatherData(latitude: float, longitude: float, timezone_name: str) -> dic
 	data = fetch_json(url)
 
 	current = data["current"]
-	weather_data = {
+	location.update({
+		"description" : weather_code_to_text(current.get("weather_code", -1)),
 		"temp_c": current.get("temperature_2m", "?"),
+		"apparent_temperature": current.get("apparent_temperature", "?"),
 		"humidity": current.get("relative_humidity_2m", "?"),
-		"tilted_irradiance_raw": current.get("global_tilted_irradiance"),
-		"horizontal_irradiance_raw": current.get("shortwave_radiation"),
+		"tilted_irradiance": float(current.get("global_tilted_irradiance")),
+		"horizontal_irradiance": float(current.get("shortwave_radiation")),
 		"raw_code": current.get("weather_code", -1),
 		"temp_ambient": current.get("temperature_2m"),
-		"apparent_temperature": current.get("apparent_temperature"),
-		"wind_speed": current.get("wind_speed_10m"),
-	}
-	return weather_data
+		"wind_speed": current.get("wind_speed_10m", 0),
+		"wind_speed_ms": current.get("wind_speed_10m", 0) / 3.6
+	})
+	return location
 
 
 def calculateSolarData(weather_data: dict) -> dict:
-	raw_code = weather_data.get("raw_code", -1)
-	try:
-		code = int(raw_code)
-	except (TypeError, ValueError):
-		code = -1
-	desc = weather_code_to_text(code)
 
-	try:
-		temp_ambient = float(weather_data.get("temp_ambient"))
-		apparent_temperature = float(weather_data.get("apparent_temperature"))
-		wind_speed = float(weather_data.get("wind_speed"))
-		wind_speed_ms = wind_speed / 3.6
-		tilted_irradiance = float(weather_data.get("tilted_irradiance_raw"))
-		horizontal_irradiance = float(weather_data.get("horizontal_irradiance_raw"))
-		t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
+	temp_ambient = float(weather_data.get("temp_ambient"))
+	wind_speed = float(weather_data.get("wind_speed"))
+	wind_speed_ms = float(weather_data.get("wind_speed_ms"))	
+	tilted_irradiance = weather_data.get("tilted_irradiance")
+	horizontal_irradiance = weather_data.get("horizontal_irradiance")
 
-		panel_output_w = estimate_panel_output_w(tilted_irradiance)
-		dc_output_w = estimate_array_output_w(panel_output_w) * temp_loss_factor
-		ac_output_w = estimate_ac_output_w(dc_output_w)
-		density_w_m2 = tilted_irradiance * PANEL_STC_EFFICIENCY
-		return {
-			"name": CITY_NAME,
-			"country": COUNTRY_CODE,
-			"temp_c": weather_data.get("temp_c", "?"),
-			"apparent_temperature": apparent_temperature,
-			"description": desc,
-			"humidity": weather_data.get("humidity", "?"),
-			"tilted_irradiance": tilted_irradiance,
-			"horizontal_irradiance": horizontal_irradiance,
-			"wind_speed_ms": wind_speed_ms,
-			"t_cell": t_cell,
-			"temp_loss_factor": temp_loss_factor,
-			"panel_output_w": panel_output_w,
-			"dc_output_w": dc_output_w,
-			"ac_output_w": ac_output_w,
-			"density_w_m2": density_w_m2,
-		}
-	except (TypeError, ValueError):
-		return {
-			"name": CITY_NAME,
-			"country": COUNTRY_CODE,
-			"temp_c": weather_data.get("temp_c", "?"),
-			"apparent_temperature": None,
-			"description": desc,
-			"humidity": weather_data.get("humidity", "?"),
-			"tilted_irradiance": None,
-			"horizontal_irradiance": None,
-			"wind_speed_ms": None,
-			"t_cell": None,
-			"temp_loss_factor": None,
-			"panel_output_w": None,
-			"dc_output_w": None,
-			"ac_output_w": None,
-			"density_w_m2": None,
-		}
+	t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
+	panel_output_w = estimate_panel_output_w(tilted_irradiance)
+	dc_output_w = estimate_array_output_w(panel_output_w) * temp_loss_factor
+	ac_output_w = estimate_ac_output_w(dc_output_w)
+	density_w_m2 = tilted_irradiance * PANEL_STC_EFFICIENCY
 
+	weather_data.update({
+		"t_cell": t_cell,
+		"temp_loss_factor": temp_loss_factor,
+		"panel_output_w": panel_output_w,
+		"dc_output_w": dc_output_w,
+		"ac_output_w": ac_output_w,
+		"density_w_m2": density_w_m2	
+	})	
+	return weather_data
 
 def get_time(timezone_name: str) -> str:
 	try:
@@ -227,15 +199,12 @@ def get_time(timezone_name: str) -> str:
 
 
 def main() -> None:
+	result = {}
 	try:
-		location = resolve_location()
-		weather_data = getWeatherData(
-			location["latitude"],
-			location["longitude"],
-			location["timezone"],
-		)
-		solarAndWeatherData = calculateSolarData(weather_data)
-		current_time = get_time(location["timezone"])
+		result = resolve_location(CITY_NAME, COUNTRY_CODE)
+		result = getWeatherData(result)
+		result = calculateSolarData(result)
+		current_time = get_time(result["timezone"])
 	except (URLError, TimeoutError, KeyError, ValueError) as exc:
 		print(f"Could not fetch live weather/time data: {exc}")
 		return
@@ -246,17 +215,21 @@ def main() -> None:
 	print("Current weather and estimated solar data:")
 
 	formatted_output = (
-    f"{solarAndWeatherData['name']}, {solarAndWeatherData['country']}: {solarAndWeatherData['temp_c']}°C, "
-    f"feels like {solarAndWeatherData['apparent_temperature']:.1f}°C, {solarAndWeatherData['description']}, "
-    f"humidity {solarAndWeatherData['humidity']}%, "
-    f"tilted solar {solarAndWeatherData['tilted_irradiance']:.0f} W/m^2, "
-    f"horizontal {solarAndWeatherData['horizontal_irradiance']:.0f} W/m^2, "
-    f"panel {solarAndWeatherData['density_w_m2']:.0f} W/m^2, "
-    f"wind {solarAndWeatherData['wind_speed_ms']:.1f} m/s, "
-    f"t_cell {solarAndWeatherData['t_cell']:.1f}°C, loss {solarAndWeatherData['temp_loss_factor']:.3f}, "
-    f"panel DC {solarAndWeatherData['panel_output_w']:.0f} W, array DC {solarAndWeatherData['dc_output_w']:.0f} W, "
-    f"AC {solarAndWeatherData['ac_output_w']:.0f} W, tilt {PANEL_TILT_DEG}°, azimuth {PANEL_AZIMUTH_DEG}°"
-)
+		f"{result['cityname']}, {result['country']}: {result['temp_c']}°C, "
+		f"{f'feels like {result['apparent_temperature']:.1f}°C, ' if result.get('apparent_temperature') is not None else ''}"
+		f"{result['description']}, "
+		f"humidity {result['humidity']}%, "
+		f"tilted solar {result['tilted_irradiance']:.0f} W/m^2, "
+		f"horizontal {result['horizontal_irradiance']:.0f} W/m^2, "
+		f"panel {result['density_w_m2']:.0f} W/m^2, "
+		f"wind {result['wind_speed_ms']:.1f} m/s, "
+		f"t_cell {result['t_cell']:.1f}°C, "
+		f"loss {result['temp_loss_factor']:.3f}, "
+		f"panel DC {result['panel_output_w']:.0f} W, "
+		f"array DC {result['dc_output_w']:.0f} W, "
+		f"AC {result['ac_output_w']:.0f} W, "
+		f"tilt {PANEL_TILT_DEG}°, azimuth {PANEL_AZIMUTH_DEG}°"
+	)
 	print(formatted_output)
 	
 if __name__ == "__main__":
