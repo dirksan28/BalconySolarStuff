@@ -25,7 +25,6 @@ PANEL_AZIMUTH_DEG = 35 #https://azimut.polka-umwelt.de/ # Panel orientation in d
 # Ground-mounted ((Free-standing / Field)) -> very good air circulation: U0=21.4, U1=4.02
 # Vertically mounted (Solar Fence / Facade) -> Good to moderate airflow: U0=23.0, U1=3.1
 # Roof-mounted (Parallel to the roof) -> Poor airflow + temp. from roof: U0=29.0, U1=4.4
-
 U0 = 21.4 # Base heat transfer coefficient (influence of ambient temperature)
 U1 = 4.02 # Wind cooling factor (cooling effect per m/s of wind speed)
 TEMP_COEFF = -0.0038 # Temperature coefficient of the panel (-0.38% power per °C above 25°C)
@@ -135,7 +134,7 @@ def calculate_cell_temperature_and_loss(temp_ambient: float, wind_speed_ms: floa
 	return t_cell, temp_loss_factor
 
 
-def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str) -> dict:
+def getWeatherData(latitude: float, longitude: float, timezone_name: str) -> dict:
 	url = (
 		"https://api.open-meteo.com/v1/forecast"
 		f"?latitude={latitude}&longitude={longitude}"
@@ -146,11 +145,21 @@ def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str
 	data = fetch_json(url)
 
 	current = data["current"]
-	temp_c = current.get("temperature_2m", "?")
-	humidity = current.get("relative_humidity_2m", "?")
-	tilted_irradiance_raw = current.get("global_tilted_irradiance")
-	horizontal_irradiance_raw = current.get("shortwave_radiation")
-	raw_code = current.get("weather_code", -1)
+	weather_data = {
+		"temp_c": current.get("temperature_2m", "?"),
+		"humidity": current.get("relative_humidity_2m", "?"),
+		"tilted_irradiance_raw": current.get("global_tilted_irradiance"),
+		"horizontal_irradiance_raw": current.get("shortwave_radiation"),
+		"raw_code": current.get("weather_code", -1),
+		"temp_ambient": current.get("temperature_2m"),
+		"apparent_temperature": current.get("apparent_temperature"),
+		"wind_speed": current.get("wind_speed_10m"),
+	}
+	return weather_data
+
+
+def calculateSolarData(weather_data: dict) -> dict:
+	raw_code = weather_data.get("raw_code", -1)
 	try:
 		code = int(raw_code)
 	except (TypeError, ValueError):
@@ -158,12 +167,12 @@ def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str
 	desc = weather_code_to_text(code)
 
 	try:
-		temp_ambient = float(current.get("temperature_2m"))
-		apparent_temperature = float(current.get("apparent_temperature"))
-		wind_speed = float(current.get("wind_speed_10m"))
+		temp_ambient = float(weather_data.get("temp_ambient"))
+		apparent_temperature = float(weather_data.get("apparent_temperature"))
+		wind_speed = float(weather_data.get("wind_speed"))
 		wind_speed_ms = wind_speed / 3.6
-		tilted_irradiance = float(tilted_irradiance_raw)
-		horizontal_irradiance = float(horizontal_irradiance_raw)
+		tilted_irradiance = float(weather_data.get("tilted_irradiance_raw"))
+		horizontal_irradiance = float(weather_data.get("horizontal_irradiance_raw"))
 		t_cell, temp_loss_factor = calculate_cell_temperature_and_loss(temp_ambient, wind_speed_ms, tilted_irradiance)
 
 		panel_output_w = estimate_panel_output_w(tilted_irradiance)
@@ -173,10 +182,10 @@ def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str
 		return {
 			"name": CITY_NAME,
 			"country": COUNTRY_CODE,
-			"temp_c": temp_c,
+			"temp_c": weather_data.get("temp_c", "?"),
 			"apparent_temperature": apparent_temperature,
 			"description": desc,
-			"humidity": humidity,
+			"humidity": weather_data.get("humidity", "?"),
 			"tilted_irradiance": tilted_irradiance,
 			"horizontal_irradiance": horizontal_irradiance,
 			"wind_speed_ms": wind_speed_ms,
@@ -191,10 +200,10 @@ def getWeatherAndSolarData(latitude: float, longitude: float, timezone_name: str
 		return {
 			"name": CITY_NAME,
 			"country": COUNTRY_CODE,
-			"temp_c": temp_c,
+			"temp_c": weather_data.get("temp_c", "?"),
 			"apparent_temperature": None,
 			"description": desc,
-			"humidity": humidity,
+			"humidity": weather_data.get("humidity", "?"),
 			"tilted_irradiance": None,
 			"horizontal_irradiance": None,
 			"wind_speed_ms": None,
@@ -220,11 +229,12 @@ def get_time(timezone_name: str) -> str:
 def main() -> None:
 	try:
 		location = resolve_location()
-		solarAndWeatherData = getWeatherAndSolarData(
+		weather_data = getWeatherData(
 			location["latitude"],
 			location["longitude"],
 			location["timezone"],
 		)
+		solarAndWeatherData = calculateSolarData(weather_data)
 		current_time = get_time(location["timezone"])
 	except (URLError, TimeoutError, KeyError, ValueError) as exc:
 		print(f"Could not fetch live weather/time data: {exc}")
