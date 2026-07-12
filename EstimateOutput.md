@@ -13,6 +13,9 @@ The result is a **transparent, engineering‑oriented snapshot** of how much pow
 
 A typical output would look like this
 ```
+Current time:
+2026-07-12T08:53:51+02:00 (Europe/Berlin)
+
 Current weather and estimated solar data:
 Weitenung, Germany: 23.2°C, wind 4.5 m/s, humidity 50%,feels like 21.6°C,  Clear sky 
 panel tilt: 26.5°, panel azimuth: 35°
