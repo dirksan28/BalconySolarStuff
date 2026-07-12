@@ -107,7 +107,7 @@ Derived:
 | `TEMP_COEFF` | `-0.0038` | Power loss per °C above 25°C |
 
 >[!NOTE]
-> These default are for Ground-mounted panels.
+> These defaults are for Ground-mounted panels.
 >U0/U1 are intentionally chosen lower than the Faiman standard values to underestimate wind cooling and therefore produce a conservative (lower) power estimate.
 
 ---
