@@ -297,9 +297,7 @@ Solar zenith and azimuth from time + location.
 Angle of incidence:
 
 $$
-\cos(\theta_i) =
-\sin(\theta_z)\cos(\gamma_s - \gamma_p)\sin(\beta)
-+ \cos(\theta_z)\cos(\beta)
+\cos(\theta_{i}) = \sin(\theta_{z})\cos(\gamma_{s} - \gamma_{p})\sin(\beta) + \cos(\theta_{z})\cos(\beta)
 $$
 
 Direct component:
