@@ -156,7 +156,7 @@ Faiman model default U0 and U1 values reported in literature
 4. **Print summary**  
    Human‑readable output
 
-### 4.2. Mermaid sequence diagram
+### 4.2. Sequence diagram
 
 ```mermaid
 sequenceDiagram
