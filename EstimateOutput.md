@@ -11,6 +11,9 @@ This script provides a **real‑time estimate of the electrical power output** o
 
 The result is a **transparent, engineering‑oriented snapshot** of how much power your PV system is producing right now, based solely on your location and panel parameters.
 
+>[!NOTE]
+>This model is designed for monofacial panels only, meaning it does not consider albedo effects or rear-side irradiance typical of bifacial panels.
+
 ---
 
 ## 2. Installation & execution
@@ -93,7 +96,7 @@ Derived:
 | Constant | Example | Meaning |
 |----------|---------|---------|
 | `PANEL_TILT_DEG` | `26.5` | Tilt angle (0° horizontal, 90° vertical) |
-| `PANEL_AZIMUTH_DEG` | `35` | Orientation relative to South (clockwise toward West) |
+| `PANEL_AZIMUTH_DEG` | `35` | Orientation relative to South (clockwise toward West) Check https://azimut.polka-umwelt.de/ to determine your panel azimuth via map measurement.|
 
 ### 3.5. Temperature model (Faiman)
 
