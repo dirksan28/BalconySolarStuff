@@ -1,6 +1,6 @@
 # Balcony PV Output Estimator (`EstimateOutput.py`)
 
-## 1. Purpose of this code (Goal & benefits)
+## 1. Purpose
 
 This script provides a **real‑time estimate of the electrical power output** of a small photovoltaic system (e.g., balcony solar). It uses **live weather and irradiance data** from Open‑Meteo and applies a **physics‑based PV performance model** to compute:
 
