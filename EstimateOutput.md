@@ -11,6 +11,21 @@ This script provides a **real‑time estimate of the electrical power output** o
 
 The result is a **transparent, engineering‑oriented snapshot** of how much power your PV system is producing right now, based solely on your location and panel parameters.
 
+A typical output would look like this
+```
+Current weather and estimated solar data:
+Weitenung, Germany: 23.2°C, wind 4.5 m/s, humidity 50%,feels like 21.6°C,  Clear sky 
+panel tilt: 26.5°, panel azimuth: 35°
+horizontal solar irradiance: 384 W/m^2 
+tilted solar irradiance:196 W/m^2 
+effective irradiance per panel: 40 W/m^2 
+cell temperature: 28.2°C 
+cell temp loss factor: 0.988 
+panel DC output: 79 W 
+array DC output: 155 W 
+AC output: 147 W
+```
+
 >[!NOTE]
 >This model is designed for monofacial panels only, meaning it does not consider albedo effects or rear-side irradiance typical of bifacial panels.
 
