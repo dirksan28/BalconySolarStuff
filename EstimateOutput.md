@@ -106,7 +106,18 @@ Derived:
 | `U1` | `4.02` | Wind cooling coefficient |
 | `TEMP_COEFF` | `-0.0038` | Power loss per °C above 25°C |
 
+>[!NOTE]
+> These default are for Ground-mounted panels.
+>U0/U1 are intentionally chosen lower than the Faiman standard values to underestimate wind cooling and therefore produce a conservative (lower) power estimate.
+
 ---
+
+Faiman model default U0 and U1 values reported in literature
+| Mounting Scenario | Recommended Faiman Values (U0 / U1) | Notes |
+| --- | --- | --- |
+| **Ground‑mounted (Free‑standing / Field)** | **≈25 / ≈6.84** | Very good ventilation; strong wind‑driven cooling expected. |
+| **Vertically mounted (Solar Fence / Facade)** | **≈25–27 / ≈5–7** | Moderate ventilation; reduced wind cooling compared to open‑rack. |
+| **Roof‑mounted (Parallel to the roof)** | **≈29–32 / ≈5–7** | Poor ventilation; roof heating increases cell temperature. |
 
 ## 4. How it works (Program flow)
 
