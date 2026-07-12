@@ -155,39 +155,39 @@ sequenceDiagram
 
 Panel DC output:
 
-\[
-P_{\text{panel}} = \text{GTI} \cdot A \cdot \eta_{\text{STC}}
-\]
+$$
+P_{\mathrm{panel}} = \mathrm{GTI} \cdot A \cdot \eta_{\mathrm{STC}}
+$$
 
 Total DC:
 
-\[
-P_{\text{DC}} = P_{\text{panel}} \cdot N \cdot f_{\text{temp}}
-\]
+$$
+P_{\mathrm{DC}} = P_{\mathrm{panel}} \cdot N \cdot f_{\mathrm{temp}}
+$$
 
 AC output:
 
-\[
-P_{\text{AC}} = P_{\text{DC}} \cdot \eta_{\text{AC}}
-\]
+$$
+P_{\mathrm{AC}} = P_{\mathrm{DC}} \cdot \eta_{\mathrm{AC}}
+$$
 
 ### 5.2. Faiman temperature model
 
 Cell temperature:
 
-\[
-T_{\text{cell}} = T_{\text{amb}} + \frac{\text{GTI}}{U_0 + U_1 v_{\text{wind}}}
-\]
+$$
+T_{\mathrm{cell}} = T_{\mathrm{amb}} + \frac{\mathrm{GTI}}{U_0 + U_1 v_{\mathrm{wind}}}
+$$
 
 Temperature loss factor:
 
-\[
-f_{\text{temp}} =
+$$
+f_{\mathrm{temp}} =
 \begin{cases}
-1 & T_{\text{cell}} \le 25^\circ C \\
-1 + \text{TEMP\_COEFF} \cdot (T_{\text{cell}} - 25) & T_{\text{cell}} > 25^\circ C
+1 & T_{\mathrm{cell}} \le 25^\circ\mathrm{C} \\
+1 + \mathrm{TEMP\_COEFF} \cdot (T_{\mathrm{cell}} - 25) & T_{\mathrm{cell}} > 25^\circ\mathrm{C}
 \end{cases}
-\]
+$$
 
 ### 5.3. Why these models?
 
@@ -264,34 +264,34 @@ Solar zenith and azimuth from time + location.
 
 Angle of incidence:
 
-\[
+$$
 \cos(\theta_i) =
 \sin(\theta_z)\cos(\gamma_s - \gamma_p)\sin(\beta)
 + \cos(\theta_z)\cos(\beta)
-\]
+$$
 
 Direct component:
 
-\[
-I_{\text{direct,tilt}} = \text{DNI} \cdot \max(\cos(\theta_i), 0)
-\]
+$$
+I_{\mathrm{direct,tilt}} = \mathrm{DNI} \cdot \max(\cos(\theta_i), 0)
+$$
 
 #### Step 4 — Diffuse component (isotropic model)
 
-\[
-I_{\text{diffuse,tilt}} = \text{DHI} \cdot \frac{1 + \cos(\beta)}{2}
-\]
+$$
+I_{\mathrm{diffuse,tilt}} = \mathrm{DHI} \cdot \frac{1 + \cos(\beta)}{2}
+$$
 
 #### Step 5 — Ground reflection (optional)
 
-\[
-I_{\text{reflected}} = \text{GHI} \cdot \rho \cdot \frac{1 - \cos(\beta)}{2}
-\]
+$$
+I_{\mathrm{reflected}} = \mathrm{GHI} \cdot \rho \cdot \frac{1 - \cos(\beta)}{2}
+$$
 
 #### Step 6 — Combine
 
-\[
-\text{GTI} = I_{\text{direct,tilt}} + I_{\text{diffuse,tilt}} + I_{\text{reflected}}
-\]
+$$
+\mathrm{GTI} = I_{\mathrm{direct,tilt}} + I_{\mathrm{diffuse,tilt}} + I_{\mathrm{reflected}}
+$$
 
 This GTI can then be used exactly as in the script to compute DC and AC output.
