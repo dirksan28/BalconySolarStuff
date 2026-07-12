@@ -269,20 +269,21 @@ def main() -> None:
 	print("Current weather and estimated solar data:")
 
 	formatted_output = (
-		f"{result['cityname']}, {result['country']}: {result['temp_c']}°C, "
-		f"{f'feels like {result['apparent_temperature']:.1f}°C, ' if result.get('apparent_temperature') is not None else ''}"
-		f"{result['description']}, "
-		f"humidity {result['humidity']}%, "
-		f"tilted solar {result['tilted_irradiance']:.0f} W/m^2, "
-		f"horizontal {result['horizontal_irradiance']:.0f} W/m^2, "
-		f"panel {result['density_w_m2']:.0f} W/m^2, "
+		f"{result['cityname']}, {result['country']}: "
+		f"{result['temp_c']}°C, "
 		f"wind {result['wind_speed_ms']:.1f} m/s, "
-		f"t_cell {result['t_cell']:.1f}°C, "
-		f"loss {result['temp_loss_factor']:.3f}, "
-		f"panel DC {result['panel_output_w']:.0f} W, "
-		f"array DC {result['dc_output_w']:.0f} W, "
-		f"AC {result['ac_output_w']:.0f} W, "
-		f"tilt {PANEL_TILT_DEG}°, azimuth {PANEL_AZIMUTH_DEG}°"
+		f"humidity {result['humidity']}%,"
+		f"{f'feels like {result['apparent_temperature']:.1f}°C, ' if result.get('apparent_temperature') is not None else ''} "
+		f"{result['description']} \n"
+		f"panel tilt: {PANEL_TILT_DEG}°, panel azimuth: {PANEL_AZIMUTH_DEG}°\n"
+		f"horizontal solar irradiance: {result['horizontal_irradiance']:.0f} W/m^2 \n"
+		f"tilted solar irradiance:{result['tilted_irradiance']:.0f} W/m^2 \n"
+		f"effective irradiance per panel: {result['density_w_m2']:.0f} W/m^2 \n"
+		f"cell temperature: {result['t_cell']:.1f}°C \n"
+		f"cell temp loss factor: {result['temp_loss_factor']:.3f} \n"
+		f"panel DC output: {result['panel_output_w']:.0f} W \n"
+		f"array DC output: {result['dc_output_w']:.0f} W \n"
+		f"AC output: {result['ac_output_w']:.0f} W"
 	)
 	print(formatted_output)
 	
