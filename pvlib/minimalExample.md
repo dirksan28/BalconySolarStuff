@@ -8,3 +8,10 @@
       * DHI (Diffuse Horizontal Irradiance): Scattered radiation from the sky.
    
 [1] [https://gist.github.com](https://gist.github.com/supernlogn/018df045846ae72815676719bc02f03a)
+
+## setup
+```
+ash pvlib/setup_venv.sh
+source pvlib/.venv/bin/activate
+python pvlib/minimalExample.py
+```
